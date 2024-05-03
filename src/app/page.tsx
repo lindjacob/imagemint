@@ -1,8 +1,15 @@
 "use client"
 
+import * as React from 'react'
 import { useState, useEffect } from "react";
 import { connectWallet, getCurrentWalletConnected } from "../utils/interact";
 import { pinFileToIPFS } from "../api/pinata";
+import {
+  type BaseError,
+  useWaitForTransactionReceipt,
+  useWriteContract
+} from 'wagmi';
+import { abi } from '../lib/abi';
 
 type ChangeEvent = React.ChangeEvent<HTMLInputElement>;
 
@@ -13,6 +20,13 @@ export default function Home() {
   const [description, setDescription] = useState("");
   const [uri, setURI] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  const {
+    data: hash,
+    error,
+    isPending,
+    writeContract
+  } = useWriteContract()
 
   const handleFileChange = async (e: ChangeEvent) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -46,9 +60,22 @@ export default function Home() {
     addWalletListener();
   }
 
-  const handleMintNFT = async () => {
-
+  async function handleMintNFT() {
+    console.log('submitting')
+    console.log('walletAddress:', `0x${walletAddress.slice(2)}`);
+    console.log('contract address:', (`0x${process.env.NEXT_PUBLIC_IMAGE_MINT_POLYGON_CONTRACT_ADDRESS}`).length)
+    writeContract({
+      address: `0x${process.env.NEXT_PUBLIC_IMAGE_MINT_POLYGON_CONTRACT_ADDRESS}`,
+      abi,
+      functionName: 'safeMint',
+      args: [`0x${walletAddress.slice(2)}`, uri],
+    });
   }
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    })
 
   const addWalletListener = () => {
     if (window.ethereum) {
@@ -186,10 +213,25 @@ export default function Home() {
               onChange={event => setDescription(event.target.value)}
             />
           </label>
+          {hash && <div>Transaction Hash: {hash}</div>}
         </form>
       </div>
-      <div className="flex justify-center my-10">
-        <button id="mintButton" className="btn btn-outline btn-secondary btn-disabled" onClick={handleMintNFT}>Mint NFT</button>
+      <div className="flex justify-center my-3">
+        {isConfirming && <div>Waiting for confirmation...</div>}
+        {isConfirmed && <div>Transaction confirmed.</div>}
+        {error && (
+          <div>Error: {(error as BaseError).shortMessage || error.message}</div>
+        )}
+      </div>
+      <div className="flex justify-center my-5">
+        <button
+          id="mintButton"
+          className="btn btn-outline btn-secondary btn-disabled"
+          disabled={isPending}
+          onClick={handleMintNFT}
+        >
+          {isPending ? 'Confirming...' : 'Mint NFT'}
+        </button>
       </div>
     </main>
   );

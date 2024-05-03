@@ -215,7 +215,7 @@ export default function Home() {
           </label>  
         </form>
       </div>
-      <div className="flex justify-center my-3">
+      <div className="flex flex-col items-center my-3 gap-3">
         {hash && <div>Transaction Hash: {hash}</div>}
         {isConfirming && <div>Waiting for confirmation...</div>}
         {isConfirmed && <div>Transaction confirmed.</div>}

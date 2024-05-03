@@ -212,11 +212,11 @@ export default function Home() {
               className="input input-bordered w-full max-w-xs input-primary"
               onChange={event => setDescription(event.target.value)}
             />
-          </label>
-          {hash && <div>Transaction Hash: {hash}</div>}
+          </label>  
         </form>
       </div>
       <div className="flex justify-center my-3">
+        {hash && <div>Transaction Hash: {hash}</div>}
         {isConfirming && <div>Waiting for confirmation...</div>}
         {isConfirmed && <div>Transaction confirmed.</div>}
         {error && (
